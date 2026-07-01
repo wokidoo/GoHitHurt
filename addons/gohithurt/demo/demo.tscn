@@ -1,0 +1,218 @@
+[gd_scene format=3 uid="uid://dmtrxud5fwvbu"]
+
+[ext_resource type="Script" uid="uid://ghcmm6glxbke" path="res://addons/gohithurt/scripts/go_hurtbox_2d.gd" id="1_8if2t"]
+[ext_resource type="Script" uid="uid://fu537ilk8bdt" path="res://addons/gohithurt/scripts/go_hitbox_2d.gd" id="2_rf8o5"]
+
+[sub_resource type="GDScript" id="GDScript_jlcvf"]
+resource_name = "label"
+script/source = "extends Label
+
+
+func _on_go_hurtbox_2d_hit_detected(collision: Dictionary) -> void:
+	print(collision)
+"
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_m0uan"]
+rough = true
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_m0uan"]
+normal = Vector2(0, 1)
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_p48gp"]
+distance = -600.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_8if2t"]
+normal = Vector2(1, 0)
+distance = 50.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rf8o5"]
+normal = Vector2(-1, 0)
+distance = -1100.0
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_df0gf"]
+size = Vector2(100, 1000)
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_rf8o5"]
+size = Vector2(1100, 100)
+
+[sub_resource type="GDScript" id="GDScript_m0uan"]
+script/source = "extends CharacterBody2D
+
+@export var max_speed:float = 100.0
+
+var horizontal_input:float = 0.0
+
+func _physics_process(delta: float) -> void:
+	horizontal_input = Input.get_axis(\"ui_left\",\"ui_right\")
+	if is_zero_approx(horizontal_input):
+		if is_on_floor():
+			velocity.x = lerpf(velocity.x,0.0,delta*5)
+	else:
+		velocity.x = lerpf(velocity.x,horizontal_input*max_speed,delta*100)
+	
+	## Add Gravity
+	if not is_on_floor():
+		velocity += get_gravity()*delta
+	## Compute physics
+	move_and_slide()
+
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed(\"ui_up\") and is_on_floor():
+		velocity.y -= 500.0
+	elif event.is_action_pressed(\"ui_accept\"):
+		get_node(\"./GoHitbox2D\").query_hit()
+
+func _on_go_hurtbox_2d_hit_detected(collision: Dictionary) -> void:
+	var flash_tween := create_tween()
+	flash_tween.bind_node(self)
+	flash_tween.tween_property(self,'modulate',Color.RED,0.25)
+	flash_tween.chain().tween_property(self,'modulate',Color.WHITE,0.1)
+	print(collision)
+	var source :Node2D= collision.get('source',null)
+	var push_dir:Vector2 = source.global_position.direction_to(self.global_position)
+	if collision.get(&'force'):
+		velocity += (push_dir * collision.get(&'hit_data').get(&'force'))
+"
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_p48gp"]
+radius = 14.56022
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_p48gp"]
+size = Vector2(30, 30)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hmx0x"]
+radius = 14.0
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_p48gp"]
+b = Vector2(50, 0)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_p48gp"]
+size = Vector2(100, 100)
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_hmx0x"]
+size = Vector2(100, 100)
+
+[node name="Demo" type="Node2D" unique_id=2065762098]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1997442073]
+
+[node name="UI" type="Control" parent="CanvasLayer" unique_id=1042678199]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/UI" unique_id=943745003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/UI/MarginContainer" unique_id=656303843]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/UI/MarginContainer/VBoxContainer" unique_id=1802486389]
+layout_mode = 2
+size_flags_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "- ui_accept: enable Hitbox"
+paragraph_separator = ","
+script = SubResource("GDScript_jlcvf")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1769389273]
+physics_material_override = SubResource("PhysicsMaterial_m0uan")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1138824517]
+shape = SubResource("WorldBoundaryShape2D_m0uan")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="StaticBody2D" unique_id=703506335]
+shape = SubResource("WorldBoundaryShape2D_p48gp")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D" unique_id=36749270]
+shape = SubResource("WorldBoundaryShape2D_8if2t")
+
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="StaticBody2D" unique_id=147286954]
+position = Vector2(0, 500)
+shape = SubResource("WorldBoundaryShape2D_rf8o5")
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D" unique_id=1817601824]
+position = Vector2(0, 250)
+texture = SubResource("PlaceholderTexture2D_df0gf")
+
+[node name="Sprite2D2" type="Sprite2D" parent="StaticBody2D" unique_id=1278389775]
+position = Vector2(1150, 250)
+texture = SubResource("PlaceholderTexture2D_df0gf")
+
+[node name="Sprite2D3" type="Sprite2D" parent="StaticBody2D" unique_id=141687591]
+position = Vector2(550, 650)
+texture = SubResource("PlaceholderTexture2D_rf8o5")
+
+[node name="Sprite2D4" type="Sprite2D" parent="StaticBody2D" unique_id=1129475534]
+position = Vector2(550, -50)
+texture = SubResource("PlaceholderTexture2D_rf8o5")
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="." unique_id=1020907720]
+position = Vector2(167, 188)
+script = SubResource("GDScript_m0uan")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D" unique_id=1318314994]
+shape = SubResource("CircleShape2D_p48gp")
+
+[node name="Sprite2D" type="Sprite2D" parent="CharacterBody2D" unique_id=434726301]
+texture = SubResource("PlaceholderTexture2D_p48gp")
+
+[node name="CanvasModulate" type="CanvasModulate" parent="CharacterBody2D" unique_id=675360091]
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D" unique_id=1972790430]
+zoom = Vector2(1.3, 1.3)
+limit_left = 0
+limit_top = 0
+limit_right = 1150
+limit_bottom = 650
+limit_smoothed = true
+editor_draw_limits = true
+
+[node name="GoHurtbox2D" type="Area2D" parent="CharacterBody2D" unique_id=568564647]
+monitoring = false
+script = ExtResource("1_8if2t")
+metadata/_custom_type_script = "uid://ghcmm6glxbke"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D/GoHurtbox2D" unique_id=244388532]
+shape = SubResource("CircleShape2D_hmx0x")
+
+[node name="GoHitbox2D" type="ShapeCast2D" parent="CharacterBody2D" unique_id=1650348394]
+enabled = false
+shape = SubResource("SegmentShape2D_p48gp")
+target_position = Vector2(0, 0)
+collide_with_areas = true
+collide_with_bodies = false
+script = ExtResource("2_rf8o5")
+hit_data = {
+&"force": 1000.0
+}
+metadata/_custom_type_script = "uid://fu537ilk8bdt"
+
+[node name="GoHurtbox2D" type="Area2D" parent="." unique_id=821216297]
+position = Vector2(540, 553)
+monitoring = false
+script = ExtResource("1_8if2t")
+metadata/_custom_type_script = "uid://ghcmm6glxbke"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GoHurtbox2D" unique_id=2117746760]
+shape = SubResource("RectangleShape2D_p48gp")
+
+[node name="Sprite2D" type="Sprite2D" parent="GoHurtbox2D" unique_id=282372283]
+texture = SubResource("PlaceholderTexture2D_hmx0x")
+
+[connection signal="hit_detected" from="CharacterBody2D/GoHurtbox2D" to="CanvasLayer/UI/MarginContainer/VBoxContainer/Label" method="_on_go_hurtbox_2d_hit_detected"]
+[connection signal="hit_detected" from="GoHurtbox2D" to="CanvasLayer/UI/MarginContainer/VBoxContainer/Label" method="_on_go_hurtbox_2d_hit_detected"]
